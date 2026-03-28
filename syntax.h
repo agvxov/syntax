@@ -1,6 +1,12 @@
 #include <string.h>
 
+// E.g: + - * / 0 1
 typedef struct {
+    const char * chars;
+    const char * hl_start;
+    const char * hl_end;
+} char_group_t;
+
 // E.g: short int long
 typedef struct {
     const char * * keywords;
@@ -35,6 +41,8 @@ const char * const word_characters =
 ;
 
 #define DEFINITION_MAX 16
+static char_group_t char_groups[DEFINITION_MAX]
+static int char_groups_empty_top;
 static keyword_group_t keyword_groups[DEFINITION_MAX];
 static int keyword_groups_empty_top;
 static region_t regions[DEFINITION_MAX];
@@ -51,6 +59,7 @@ extern void syntax_highlight_string(char * const destination, const char * const
 
 
 int syntax_init(void) {
+    char_groups_empty_top    = 0;
     keyword_groups_empty_top = 0;
     regions_empty_top        = 0;
 
@@ -58,6 +67,24 @@ int syntax_init(void) {
 }
 
 int syntax_deinit(void) {
+    return 0;
+}
+
+int syntax_define_chars(
+  const char * chars,
+  const char * hl_start,
+  const char * hl_end
+) {
+    if (char_groups_empty_top >= DEFINITION_MAX
+    ||  !chars) {
+        return 1;
+    }
+
+    char_groups[char_groups_empty_top].chars = chars;
+    char_groups[char_groups_empty_top].hl_start = hl_start;
+    char_groups[char_groups_empty_top].hl_end   = hl_end;
+    ++char_groups_empty_top;
+
     return 0;
 }
 
