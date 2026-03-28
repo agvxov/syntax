@@ -134,6 +134,12 @@ Test(syntax_highlight, c_char_simple) {
     cr_assert_eq(syntax_deinit(), 0);
 }
 
+Test(syntax_highlight, c_char_multi) {
+    configure_common_syntax();
+    expect_highlight("8697", 64, ANSI_CYAN "8697" ANSI_RST);
+    cr_assert_eq(syntax_deinit(), 0);
+}
+
 Test(syntax_highlight, c_keyword_simple) {
     configure_common_syntax();
     expect_highlight("int x;", 64, ANSI_RED "int" ANSI_RST " x;");
