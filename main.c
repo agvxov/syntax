@@ -15,7 +15,7 @@ signed main(void) {
 
     syntax_init();
     syntax_define_keywords(keywords, "\033[32m", "\033[0m");
-    syntax_define_range("\"", "\"", "\\", "\033[33m", "\033[0m");
+    syntax_define_region("\"", "\"", "\\", "\033[33m", "\033[0m");
     syntax_highlight_string(
         buffer,
         "static char * s = \"test \\\"t test\";\n",

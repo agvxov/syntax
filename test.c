@@ -38,9 +38,9 @@ void configure_common_syntax(void) {
     cr_assert_eq(syntax_define_keywords(kw_m4, ANSI_MAG, ANSI_RST), 0);
     cr_assert_eq(syntax_define_keywords(kw_tcl, IRC_RED, IRC_RST), 0);
 
-    cr_assert_eq(syntax_define_range("\"", "\"", "\\", ANSI_YELLOW, ANSI_RST), 0);
-    cr_assert_eq(syntax_define_range("'", "'", "\\", ANSI_CYAN, ANSI_RST), 0);
-    cr_assert_eq(syntax_define_range("`", "'", NULL, ANSI_GREEN, ANSI_RST), 0);
+    cr_assert_eq(syntax_define_region("\"", "\"", "\\", ANSI_YELLOW, ANSI_RST), 0);
+    cr_assert_eq(syntax_define_region("'", "'", "\\", ANSI_CYAN, ANSI_RST), 0);
+    cr_assert_eq(syntax_define_region("`", "'", NULL, ANSI_GREEN, ANSI_RST), 0);
 }
 
 static

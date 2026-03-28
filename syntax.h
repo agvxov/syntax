@@ -12,7 +12,7 @@ typedef struct {
     const char * escape;
     const char * hl_start;
     const char * hl_end;
-} range_t;
+} region_t;
 
 const char * const word_characters =
   #ifdef SYNTAX_WORD_CHARACTERS
@@ -27,9 +27,9 @@ const char * const word_characters =
 
 #define DEFINITION_MAX 16
 keyword_group_t keyword_groups[DEFINITION_MAX];
-range_t ranges[DEFINITION_MAX];
+region_t regions[DEFINITION_MAX];
 int keyword_groups_empty_top;
-int ranges_empty_top;
+int regions_empty_top;
 
 /* Given an input length and the current highlighting,
  *  return the worst case scenario for the required buffer's size.
@@ -53,12 +53,12 @@ size_t syntax_max_memory_requirement(
         }
     }
 
-    for (int i = 0; i < ranges_empty_top; i++) {
-        size_t l = strlen(ranges[i].start)
-                 + strlen(ranges[i].end)
+    for (int i = 0; i < regions_empty_top; i++) {
+        size_t l = strlen(regions[i].start)
+                 + strlen(regions[i].end)
         ;
         l = (input_len / l)
-          * (l + strlen(ranges[i].hl_start) + strlen(ranges[i].end))
+          * (l + strlen(regions[i].hl_start) + strlen(regions[i].end))
         ;
         if (r < l) {
             r = l;
@@ -70,7 +70,7 @@ size_t syntax_max_memory_requirement(
 
 int syntax_init(void) {
     keyword_groups_empty_top = 0;
-    ranges_empty_top = 0;
+    regions_empty_top = 0;
 
     return 0;
 }
@@ -97,24 +97,24 @@ int syntax_define_keywords(
     return 0;
 }
 
-int syntax_define_range(
+int syntax_define_region(
   const char * start,
   const char * end,
   const char * escape,
   const char * hl_start,
   const char * hl_end
 ) {
-    if (ranges_empty_top >= DEFINITION_MAX
+    if (regions_empty_top >= DEFINITION_MAX
     ||  !start) {
         return 1;
     }
 
-    ranges[ranges_empty_top].start    = start;
-    ranges[ranges_empty_top].end      = end;
-    ranges[ranges_empty_top].escape   = escape;
-    ranges[ranges_empty_top].hl_start = hl_start;
-    ranges[ranges_empty_top].hl_end   = hl_end;
-    ++ranges_empty_top;
+    regions[regions_empty_top].start    = start;
+    regions[regions_empty_top].end      = end;
+    regions[regions_empty_top].escape   = escape;
+    regions[regions_empty_top].hl_start = hl_start;
+    regions[regions_empty_top].hl_end   = hl_end;
+    ++regions_empty_top;
 
     return 0;
 }
@@ -154,25 +154,25 @@ void syntax_highlight_string(
     while (*s) {
         bool matched = false;
 
-        // Ranges
-        for (int i = 0; i < ranges_empty_top; i++) {
-            const size_t start_len = strlen(ranges[i].start);
+        // regions
+        for (int i = 0; i < regions_empty_top; i++) {
+            const size_t start_len = strlen(regions[i].start);
             if (start_len == 0) {
                 continue;
             }
 
-            if (strncmp(s, ranges[i].start, start_len) != 0) {
+            if (strncmp(s, regions[i].start, start_len) != 0) {
                 continue;
             }
 
-            const size_t end_len    = ranges[i].end ? strlen(ranges[i].end) : 0;
-            const size_t escape_len = ranges[i].escape ? strlen(ranges[i].escape) : 0;
-            const char *hl_start = ranges[i].hl_start ? ranges[i].hl_start : "";
-            const char *hl_end   = ranges[i].hl_end   ? ranges[i].hl_end   : "";
+            const size_t end_len    = regions[i].end ? strlen(regions[i].end) : 0;
+            const size_t escape_len = regions[i].escape ? strlen(regions[i].escape) : 0;
+            const char *hl_start = regions[i].hl_start ? regions[i].hl_start : "";
+            const char *hl_end   = regions[i].hl_end   ? regions[i].hl_end   : "";
 
             const auto saved_out = out;
             if (_syntax_destination_append(&out, &remaining, hl_start, strlen(hl_start))
-            ||  _syntax_destination_append(&out, &remaining, ranges[i].start, start_len)) {
+            ||  _syntax_destination_append(&out, &remaining, regions[i].start, start_len)) {
                 out = saved_out;
                 goto done;
             }
@@ -181,8 +181,8 @@ void syntax_highlight_string(
 
             while (*s) {
                 if (escape_len != 0
-                &&  strncmp(s, ranges[i].escape, escape_len) == 0) {
-                    if (_syntax_destination_append(&out, &remaining, ranges[i].escape, escape_len)) {
+                &&  strncmp(s, regions[i].escape, escape_len) == 0) {
+                    if (_syntax_destination_append(&out, &remaining, regions[i].escape, escape_len)) {
                         goto done;
                     }
                     s += escape_len;
@@ -197,8 +197,8 @@ void syntax_highlight_string(
                 }
 
                 if (end_len != 0
-                &&  strncmp(s, ranges[i].end, end_len) == 0) {
-                    if (_syntax_destination_append(&out, &remaining, ranges[i].end, end_len)
+                &&  strncmp(s, regions[i].end, end_len) == 0) {
+                    if (_syntax_destination_append(&out, &remaining, regions[i].end, end_len)
                     ||  _syntax_destination_append(&out, &remaining, hl_end, strlen(hl_end))) {
                         goto done;
                     }
