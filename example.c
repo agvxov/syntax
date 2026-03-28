@@ -1,5 +1,6 @@
 // @BAKE gcc -o $*.out $@ -std=c99 -Wall -Wpedantic -ggdb
 #include <stdio.h>
+#define SYNTAX_IMPLEMENTATION 
 #include "syntax.h"
 
 /* ANSI color sequences. */

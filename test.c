@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 
+#define SYNTAX_IMPLEMENTATION 
 #include "syntax.h"
 
 /* ANSI color sequences. */

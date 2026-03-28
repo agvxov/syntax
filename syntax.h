@@ -72,7 +72,9 @@ extern void syntax_highlight_string(char * const destination, const char * const
  * That is, for example a truncated string will render as a unterminated string.
  * This behaviour is consistent with the string actually missing a termination.
  */
+#endif
 
+#ifdef SYNTAX_IMPLEMENTATION
 #ifndef SYNTAX_DEFINITION_MAX
 #  define SYNTAX_DEFINITION_MAX 16
 #endif
