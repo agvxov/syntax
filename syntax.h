@@ -1,11 +1,14 @@
 #include <string.h>
 
 typedef struct {
+// E.g: short int long
+typedef struct {
     const char * * keywords;
     const char * hl_start;
     const char * hl_end;
 } keyword_group_t;
 
+// E.g: " \" "
 typedef struct {
     const char * start;
     const char * end;
@@ -14,6 +17,12 @@ typedef struct {
     const char * hl_end;
 } region_t;
 
+/* Used to determine word boundaries,
+ *  so that partial matches may not result in highlighting.
+ * This also means that keywords may only contain characters
+ *  which are listed here.
+ * XXX: i believe unicode should work out of pure accident
+ */
 const char * const word_characters =
   #ifdef SYNTAX_WORD_CHARACTERS
     SYNTAX_WORD_CHARACTERS
@@ -26,51 +35,24 @@ const char * const word_characters =
 ;
 
 #define DEFINITION_MAX 16
-keyword_group_t keyword_groups[DEFINITION_MAX];
-region_t regions[DEFINITION_MAX];
-int keyword_groups_empty_top;
-int regions_empty_top;
+static keyword_group_t keyword_groups[DEFINITION_MAX];
+static int keyword_groups_empty_top;
+static region_t regions[DEFINITION_MAX];
+static int regions_empty_top;
 
-/* Given an input length and the current highlighting,
- *  return the worst case scenario for the required buffer's size.
- */
-size_t syntax_max_memory_requirement(
-  size_t input_len
-) {
-    size_t r = input_len;
 
-    for (int i = 0; i < keyword_groups_empty_top; i++) {
-        size_t start_len = strlen(keyword_groups[i].hl_start);
-        size_t end_len   = strlen(keyword_groups[i].hl_end);
-        for (const char * * w = keyword_groups[i].keywords; *w != NULL; w++) {
-            size_t l = strlen(*w);
-            l = (input_len / l)
-              * (l + start_len + end_len)
-            ;
-            if (r < l) {
-                r = l;
-            }
-        }
-    }
+extern int syntax_init(void);
+extern int syntax_deinit(void);
+extern int syntax_define_chars(const char * chars, const char * hl_start, const char * hl_end);
+extern int syntax_define_keywords(const char * * keywords, const char * hl_start, const char * hl_end);
+extern int syntax_define_region(const char * start, const char * end, const char * escape, const char * hl_start, const char * hl_end);
+extern size_t syntax_max_memory_requirement(size_t input_len);
+extern void syntax_highlight_string(char * const destination, const char * const source, const size_t destination_size);
 
-    for (int i = 0; i < regions_empty_top; i++) {
-        size_t l = strlen(regions[i].start)
-                 + strlen(regions[i].end)
-        ;
-        l = (input_len / l)
-          * (l + strlen(regions[i].hl_start) + strlen(regions[i].end))
-        ;
-        if (r < l) {
-            r = l;
-        }
-    }
-
-    return r;
-}
 
 int syntax_init(void) {
     keyword_groups_empty_top = 0;
-    regions_empty_top = 0;
+    regions_empty_top        = 0;
 
     return 0;
 }
@@ -119,6 +101,43 @@ int syntax_define_region(
     return 0;
 }
 
+/* Given an input length and the current highlighting,
+ *  return the worst case scenario for the required buffer's size.
+ */
+size_t syntax_max_memory_requirement(
+  size_t input_len
+) {
+    size_t r = input_len;
+
+    for (int i = 0; i < keyword_groups_empty_top; i++) {
+        size_t start_len = strlen(keyword_groups[i].hl_start);
+        size_t end_len   = strlen(keyword_groups[i].hl_end);
+        for (const char * * w = keyword_groups[i].keywords; *w != NULL; w++) {
+            size_t l = strlen(*w);
+            l = (input_len / l)
+              * (l + start_len + end_len)
+            ;
+            if (r < l) {
+                r = l;
+            }
+        }
+    }
+
+    for (int i = 0; i < regions_empty_top; i++) {
+        size_t l = strlen(regions[i].start)
+                 + strlen(regions[i].end)
+        ;
+        l = (input_len / l)
+          * (l + strlen(regions[i].hl_start) + strlen(regions[i].end))
+        ;
+        if (r < l) {
+            r = l;
+        }
+    }
+
+    return r;
+}
+
 static
 int _syntax_destination_append(
   char * * destination,
@@ -137,9 +156,9 @@ int _syntax_destination_append(
 }
 
 void syntax_highlight_string(
-    char * const destination,
-    const char * const source,
-    const size_t destination_size
+  char * const destination,
+  const char * const source,
+  const size_t destination_size
 ) {
     if (destination      == NULL
     ||  source           == NULL
