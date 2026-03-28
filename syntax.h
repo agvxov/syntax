@@ -41,7 +41,7 @@ const char * const word_characters =
 ;
 
 #define DEFINITION_MAX 16
-static char_group_t char_groups[DEFINITION_MAX]
+static char_group_t char_groups[DEFINITION_MAX];
 static int char_groups_empty_top;
 static keyword_group_t keyword_groups[DEFINITION_MAX];
 static int keyword_groups_empty_top;
@@ -182,13 +182,23 @@ int _syntax_destination_append(
     return 0;
 }
 
-/* When faced with a keyword only partially fitting,
+/* Core function - syntax_highlight_string()
+ *
+ * Char groups are optimized such that if multiple chars of the same group follow each other,
+ *  only one hl_start and hl_end will be used.
+ *
+ * When faced with a keyword only partially fitting,
  * there are only a few options:
  *   1) cut indiscriminately -> risk partial escape sequences forming eldritch outputs
  *   2) cut the keyword -> effectively highlight partial matches
  *   3) insert hl_start and discard the keyword or hl_end -> produce puzzling output that feels like a bug
  *   4) threat the operation as atomic -> waste buffer space, make strlen(destination) != sizeof(destination)-1
  * We found option 4 the least problematic.
+ *
+ * Char groups truncate as if every character was its own keyword,
+ *  memory optimization is considered as a second thought.
+ * I.e. atleast one and as many chars as possible will be placed between hl_start and hl_end,
+ *  or there won't be a trace at all.
  *
  * We apply the same logic for region starts themselves, however not the contents of a region.
  * That is, for example a truncated string will render as a unterminated string.
@@ -212,7 +222,7 @@ void syntax_highlight_string(
     while (*s) {
         bool matched = false;
 
-        // regions
+        // Regions
         for (int i = 0; i < regions_empty_top; i++) {
             const size_t start_len = strlen(regions[i].start);
             if (start_len == 0) {
@@ -223,10 +233,10 @@ void syntax_highlight_string(
                 continue;
             }
 
-            const size_t end_len    = regions[i].end ? strlen(regions[i].end) : 0;
-            const size_t escape_len = regions[i].escape ? strlen(regions[i].escape) : 0;
-            const char *hl_start = regions[i].hl_start ? regions[i].hl_start : "";
-            const char *hl_end   = regions[i].hl_end   ? regions[i].hl_end   : "";
+            const size_t end_len    = regions[i].end      ? strlen(regions[i].end)    : 0;
+            const size_t escape_len = regions[i].escape   ? strlen(regions[i].escape) : 0;
+            const char * hl_start   = regions[i].hl_start ? regions[i].hl_start       : "";
+            const char * hl_end     = regions[i].hl_end   ? regions[i].hl_end         : "";
 
             const auto saved_out = out;
             if (_syntax_destination_append(&out, &remaining, hl_start, strlen(hl_start))
@@ -294,9 +304,8 @@ void syntax_highlight_string(
             }
 
             const size_t word_len = (size_t)(word_end - s);
-            int keyword_matched = 0;
 
-            for (int i = 0; i < keyword_groups_empty_top && !keyword_matched; i++) {
+            for (int i = 0; i < keyword_groups_empty_top && !matched; i++) {
                 const char * const * w = keyword_groups[i].keywords;
                 if (w == NULL) {
                     continue;
@@ -317,19 +326,67 @@ void syntax_highlight_string(
                         }
 
                         s = word_end;
-                        keyword_matched = 1;
+                        matched = true;
                         break;
                     }
                 }
             }
+        }
 
-            if (!keyword_matched) {
-                if (_syntax_destination_append(&out, &remaining, s, word_len)) {
-                    goto done;
-                }
-                s = word_end;
+        if (matched) {
+            continue;
+        }
+
+        // Char
+        matched = false;
+        for (int i = 0; i < char_groups_empty_top; i++) {
+            const char * chars = char_groups[i].chars;
+            if (chars == NULL) {
+                continue;
             }
 
+            if (strchr(chars, (unsigned char)*s) == NULL) {
+                continue;
+            }
+
+            const char * run_end = s;
+            while (*run_end && strchr(chars, (unsigned char)*run_end) != NULL) {
+                ++run_end;
+            }
+
+            const char * hl_start = char_groups[i].hl_start ? char_groups[i].hl_start : "";
+            const char * hl_end   = char_groups[i].hl_end   ? char_groups[i].hl_end   : "";
+
+            const size_t hl_start_len = strlen(hl_start);
+            const size_t hl_end_len   = strlen(hl_end);
+
+            /* Need room for:
+             *   hl_start + at least one payload byte + hl_end + '\0'
+             */
+            if (remaining <= hl_start_len + hl_end_len + 1) {
+                continue;
+            }
+
+            size_t max_payload = remaining - 1 - hl_start_len - hl_end_len;
+            size_t run_len = (size_t)(run_end - s);
+            size_t emit_len = run_len < max_payload ? run_len : max_payload;
+
+            if (emit_len == 0) {
+                continue;
+            }
+
+            if (_syntax_destination_append(&out, &remaining, hl_start, hl_start_len)
+            ||  _syntax_destination_append(&out, &remaining, s, emit_len)
+            ||  _syntax_destination_append(&out, &remaining, hl_end, hl_end_len)) {
+                goto done;
+            }
+
+            s += emit_len;
+            matched = true;
+            break;
+        }
+
+        if (matched) {
             continue;
         }
 
