@@ -12,7 +12,7 @@ typedef struct {
 
 // E.g: short int long
 typedef struct {
-    const char * * keywords;
+    const char * const * keywords;
     const char * hl_start;
     const char * hl_end;
 } keyword_group_t;
@@ -46,7 +46,7 @@ const char * const word_characters =
 extern int syntax_init(void);
 extern int syntax_deinit(void);
 extern int syntax_define_chars(const char * chars, const char * hl_start, const char * hl_end);
-extern int syntax_define_keywords(const char * * keywords, const char * hl_start, const char * hl_end);
+extern int syntax_define_keywords(const char * const * keywords, const char * hl_start, const char * hl_end);
 extern int syntax_define_region(const char * start, const char * end, const char * escape, const char * hl_start, const char * hl_end);
 extern size_t syntax_max_memory_requirement(size_t input_len);
 extern void syntax_highlight_string(char * const destination, const char * const source, const size_t destination_size);
@@ -116,7 +116,7 @@ int syntax_define_chars(
 }
 
 int syntax_define_keywords(
-  const char * * keywords,
+  const char * const * keywords,
   const char * hl_start,
   const char * hl_end
 ) {
@@ -166,7 +166,7 @@ size_t syntax_max_memory_requirement(
     for (int i = 0; i < keyword_groups_empty_top; i++) {
         size_t start_len = strlen(keyword_groups[i].hl_start);
         size_t end_len   = strlen(keyword_groups[i].hl_end);
-        for (const char * * w = keyword_groups[i].keywords; *w != NULL; w++) {
+        for (const char * const * w = keyword_groups[i].keywords; *w != NULL; w++) {
             size_t l = strlen(*w);
             l = (input_len / l)
               * (l + start_len + end_len)
