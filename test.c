@@ -20,13 +20,13 @@
 #define IRC_BLUE "\x0312"
 #define IRC_RST  "\x03"
 
-static const char * c = {"0123456789", NULL};
+[[maybe_unused]] static const char * numbers = "0123456789";
 
-static const char * kw_c[]    = {"int", "break", "char", "if", NULL};
-static const char * kw_py[]   = {"def", "return", "None", "print", NULL};
-static const char * kw_perl[] = {"my", "sub", "say", NULL};
-static const char * kw_m4[]   = {"define", "ifdef", "dnl", NULL};
-static const char * kw_tcl[]  = {"proc", "set", "puts", NULL};
+[[maybe_unused]] static const char * kw_c[]    = {"int", "break", "char", "if", NULL};
+[[maybe_unused]] static const char * kw_py[]   = {"def", "return", "None", "print", NULL};
+[[maybe_unused]] static const char * kw_perl[] = {"my", "sub", "say", NULL};
+[[maybe_unused]] static const char * kw_m4[]   = {"define", "ifdef", "dnl", NULL};
+[[maybe_unused]] static const char * kw_tcl[]  = {"proc", "set", "puts", NULL};
 
 static
 void configure_common_syntax(void) {
