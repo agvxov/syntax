@@ -182,6 +182,18 @@ int _syntax_destination_append(
     return 0;
 }
 
+/* When faced with a keyword only partially fitting,
+ * there are only a few options:
+ *   1) cut indiscriminately -> risk partial escape sequences forming eldritch outputs
+ *   2) cut the keyword -> effectively highlight partial matches
+ *   3) insert hl_start and discard the keyword or hl_end -> produce puzzling output that feels like a bug
+ *   4) threat the operation as atomic -> waste buffer space, make strlen(destination) != sizeof(destination)-1
+ * We found option 4 the least problematic.
+ *
+ * We apply the same logic for region starts themselves, however not the contents of a region.
+ * That is, for example a truncated string will render as a unterminated string.
+ * This behaviour is consistent with the string actually missing a termination.
+ */
 void syntax_highlight_string(
   char * const destination,
   const char * const source,
