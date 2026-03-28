@@ -32,6 +32,8 @@ static
 void configure_common_syntax(void) {
     cr_assert_eq(syntax_init(), 0);
 
+    cr_assert_eq(syntax_define_chars(numbers, ANSI_CYAN, ANSI_RST), 0);
+
     cr_assert_eq(syntax_define_keywords(kw_c, ANSI_RED, ANSI_RST), 0);
     cr_assert_eq(syntax_define_keywords(kw_py, ANSI_GREEN, ANSI_RST), 0);
     cr_assert_eq(syntax_define_keywords(kw_perl, ANSI_BLUE, ANSI_RST), 0);
@@ -60,6 +62,15 @@ void expect_highlight(
     }
 }
 
+//-------------------------------------------
+//-------------------------------------------
+//  ___    _
+// | __|__| |__ _ ___ ___ __ __ _ ___ ___ ___
+// | _|/ _` / _` / -_)___/ _/ _` (_-</ -_|_-<
+// |___\__,_\__, \___|   \__\__,_/__/\___/__/
+//          |___/
+//-------------------------------------------
+//-------------------------------------------
 Test(syntax_highlight, empty_source) {
     configure_common_syntax();
     expect_highlight("", 32, "");
@@ -76,15 +87,49 @@ Test(syntax_highlight, zero_destination_size_is_noop) {
     cr_assert_eq(syntax_deinit(), 0);
 }
 
-Test(syntax_highlight, c_keyword_simple) {
-    configure_common_syntax();
-    expect_highlight("int x;", 64, ANSI_RED "int" ANSI_RST " x;");
-    cr_assert_eq(syntax_deinit(), 0);
-}
-
 Test(syntax_highlight, c_keyword_prefix_is_not_a_match) {
     configure_common_syntax();
     expect_highlight("integer", 64, "integer");
+    cr_assert_eq(syntax_deinit(), 0);
+}
+
+Test(syntax_highlight, truncated_output_is_terminated_and_has_no_overflow) {
+    configure_common_syntax();
+
+    unsigned char buf[16];
+    memset(buf, 0xCC, sizeof(buf));
+    syntax_highlight_string((char *)buf, "int x;", 8);
+
+    cr_assert_eq(buf[0], '\0');
+
+    cr_assert_eq(syntax_deinit(), 0);
+}
+
+Test(syntax_highlight, exact_fit_boundary) {
+    configure_common_syntax();
+
+    const char *expected = ANSI_RED "if" ANSI_RST;
+    char buf[sizeof(ANSI_RED) + sizeof("if") + sizeof(ANSI_RST) + 1];
+    memset(buf, 0xCC, sizeof(buf));
+
+    syntax_highlight_string(buf, "if", sizeof(buf));
+    cr_assert_str_eq(buf, expected);
+
+    cr_assert_eq(syntax_deinit(), 0);
+}
+
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+//  _  _                    _                            _   _
+// | \| |___ _ _ _ __  __ _| |___ ___ _ __  ___ _ _ __ _| |_(_)___ _ _
+// | .` / _ \ '_| '  \/ _` | |___/ _ \ '_ \/ -_) '_/ _` |  _| / _ \ ' |
+// |_|\_\___/_| |_|_|_\__,_|_|   \___/ .__/\___|_| \__,_|\__|_\___/_||_|
+//                                   |_|
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+Test(syntax_highlight, c_keyword_simple) {
+    configure_common_syntax();
+    expect_highlight("int x;", 64, ANSI_RED "int" ANSI_RST " x;");
     cr_assert_eq(syntax_deinit(), 0);
 }
 
@@ -164,31 +209,6 @@ Test(syntax_highlight, tcl_proc_uses_irc_sequences) {
         128,
         IRC_RED "proc" IRC_RST " p {} {" IRC_RED "puts" IRC_RST " hi}"
     );
-    cr_assert_eq(syntax_deinit(), 0);
-}
-
-Test(syntax_highlight, truncated_output_is_terminated_and_has_no_overflow) {
-    configure_common_syntax();
-
-    unsigned char buf[16];
-    memset(buf, 0xCC, sizeof(buf));
-    syntax_highlight_string((char *)buf, "int x;", 8);
-
-    cr_assert_eq(buf[0], '\0');
-
-    cr_assert_eq(syntax_deinit(), 0);
-}
-
-Test(syntax_highlight, exact_fit_boundary) {
-    configure_common_syntax();
-
-    const char *expected = ANSI_RED "if" ANSI_RST;
-    char buf[sizeof(ANSI_RED) + sizeof("if") + sizeof(ANSI_RST) + 1];
-    memset(buf, 0xCC, sizeof(buf));
-
-    syntax_highlight_string(buf, "if", sizeof(buf));
-    cr_assert_str_eq(buf, expected);
-
     cr_assert_eq(syntax_deinit(), 0);
 }
 
