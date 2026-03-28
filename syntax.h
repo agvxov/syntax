@@ -41,7 +41,6 @@ const char * const word_characters =
   #endif
 ;
 
-
 extern int syntax_init(void);
 extern int syntax_deinit(void);
 extern int syntax_define_chars(const char * chars, const char * hl_start, const char * hl_end);
@@ -50,6 +49,27 @@ extern int syntax_define_region(const char * start, const char * end, const char
 extern size_t syntax_max_memory_requirement(size_t input_len);
 extern void syntax_highlight_string(char * const destination, const char * const source, const size_t destination_size);
 
+/* Char groups are optimized such that if multiple chars of the same group follow each other,
+ *  only one hl_start and hl_end will be used.
+ */
+
+/* When faced with a keyword only partially fitting,
+ * there are only a few options:
+ *   1) cut indiscriminately -> risk partial escape sequences forming eldritch outputs
+ *   2) cut the keyword -> effectively highlight partial matches
+ *   3) insert hl_start and discard the keyword or hl_end -> produce puzzling output that feels like a bug
+ *   4) threat the operation as atomic -> waste buffer space, make strlen(destination) != sizeof(destination)-1
+ * We found option 4 the least problematic.
+ *
+ * Char groups truncate as if every character was its own keyword,
+ *  memory optimization is considered as a second thought.
+ * I.e. atleast one and as many chars as possible will be placed between hl_start and hl_end,
+ *  or there won't be a trace at all.
+ *
+ * We apply the same logic for region starts themselves, however not the contents of a region.
+ * That is, for example a truncated string will render as a unterminated string.
+ * This behaviour is consistent with the string actually missing a termination.
+ */
 
 #ifndef SYNTAX_DEFINITION_MAX
 #  define SYNTAX_DEFINITION_MAX 16
@@ -185,28 +205,7 @@ int _syntax_destination_append(
     return 0;
 }
 
-/* Core function - syntax_highlight_string()
- *
- * Char groups are optimized such that if multiple chars of the same group follow each other,
- *  only one hl_start and hl_end will be used.
- *
- * When faced with a keyword only partially fitting,
- * there are only a few options:
- *   1) cut indiscriminately -> risk partial escape sequences forming eldritch outputs
- *   2) cut the keyword -> effectively highlight partial matches
- *   3) insert hl_start and discard the keyword or hl_end -> produce puzzling output that feels like a bug
- *   4) threat the operation as atomic -> waste buffer space, make strlen(destination) != sizeof(destination)-1
- * We found option 4 the least problematic.
- *
- * Char groups truncate as if every character was its own keyword,
- *  memory optimization is considered as a second thought.
- * I.e. atleast one and as many chars as possible will be placed between hl_start and hl_end,
- *  or there won't be a trace at all.
- *
- * We apply the same logic for region starts themselves, however not the contents of a region.
- * That is, for example a truncated string will render as a unterminated string.
- * This behaviour is consistent with the string actually missing a termination.
- */
+// Core function
 void syntax_highlight_string(
   char * const destination,
   const char * const source,

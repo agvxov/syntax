@@ -14,6 +14,9 @@ They are matched in the exact order as listed above.
 When one of them is matched, they will be surrounded by the corresponding `hl_start` and `hl_end`,
 which you are expected to set to your preferred ANSI escapes, IRC color codes, HTML spans, or similar.
 
+> [!NOTE]
+> Technical details and compile tile nuisances can be found at the top of `syntax.h`.
+
 ### Synopsis
 ```c
 extern int syntax_init(void);
