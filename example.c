@@ -22,13 +22,13 @@ const char * keywords[] = {
 };
 
 signed main(void) {
-    unsigned char buffer[1024];
+    char buffer[1024];
 
     syntax_init();
     syntax_define_chars(digits, ANSI_CYAN, ANSI_RST);
     syntax_define_keywords(keywords, ANSI_RED, ANSI_RST);
 
-    syntax_highlight_string((char*)buffer, "int x = 01010;", sizeof(buffer));
+    syntax_highlight_string(buffer, "int x = 01010;", sizeof(buffer));
 
     syntax_deinit();
 
