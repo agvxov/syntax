@@ -53,3 +53,12 @@ when I will surely burst like a human jellyfish.
 Still, I am more fortunate than the others,
 because atleast I can ship -for example this library-
 during my short and forsaken existence.
+
+It is also notable that the Serbian man who will
+never ever finish anything under any circumstance,
+has produced a demo called `xyntax` under a few hours,
+which is the conceptual basis of Syntax.
+3 years of death-spiraling later I am ready to recognize
+that his methodology covers 90% of use-cases
+with 10% of the complexity of alternatives
+while still being fast enough.
