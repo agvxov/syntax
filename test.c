@@ -127,6 +127,12 @@ Test(syntax_highlight, exact_fit_boundary) {
 //                                   |_|
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
+Test(syntax_highlight, c_char_simple) {
+    configure_common_syntax();
+    expect_highlight("0", 64, ANSI_CYAN "0" ANSI_RST);
+    cr_assert_eq(syntax_deinit(), 0);
+}
+
 Test(syntax_highlight, c_keyword_simple) {
     configure_common_syntax();
     expect_highlight("int x;", 64, ANSI_RED "int" ANSI_RST " x;");
@@ -138,7 +144,7 @@ Test(syntax_highlight, c_mixed_tokens) {
     expect_highlight(
         "if(x)break 0;",
         64,
-        ANSI_RED "if" ANSI_RST "(" "x" ")" ANSI_RED "break" ANSI_RST " 0;"
+        ANSI_RED "if" ANSI_RST "(" "x" ")" ANSI_RED "break" ANSI_RST " " ANSI_CYAN "0" ANSI_RST ";"
     );
     cr_assert_eq(syntax_deinit(), 0);
 }
@@ -178,7 +184,7 @@ Test(syntax_highlight, python_single_quoted_string) {
 
 Test(syntax_highlight, perl_short_statement) {
     configure_common_syntax();
-    expect_highlight("my $x=1;", 64, ANSI_BLUE "my" ANSI_RST " $x=1;");
+    expect_highlight("my $x=1;", 64, ANSI_BLUE "my" ANSI_RST " $x=" ANSI_CYAN "1" ANSI_RST ";");
     cr_assert_eq(syntax_deinit(), 0);
 }
 
@@ -197,7 +203,7 @@ Test(syntax_highlight, m4_define_with_backtick_quote) {
     expect_highlight(
         "define(`x',1)",
         64,
-        ANSI_MAG "define" ANSI_RST "(" ANSI_GREEN "`x'" ANSI_RST ",1)"
+        ANSI_MAG "define" ANSI_RST "(" ANSI_GREEN "`x'" ANSI_RST "," ANSI_CYAN "1" ANSI_RST ")"
     );
     cr_assert_eq(syntax_deinit(), 0);
 }
