@@ -5,14 +5,14 @@
 ### Overview
 To work with Syntax, you have to define a syntax first.
 There are 3 concepts:
-1. Keywords: strings made of keyword characters (redefinable) seperated by non-keyword characters
+1. Keywords: strings made of keyword characters (redefinable) separated by non-keyword characters
 2. Regions: a starter string and a terminating string between which no further matching should be done
 3. Chars: special characters should be highlighted regardless of word boundaries
 
 They are matched in the exact order as listed above.
 
-When one of them is matched, they will be sourounded by the corresponding `hl_start` and `hl_end`,
-which you are expected to set to your prefered ANSI escapes, IRC color codes, HTML spans, or similar.
+When one of them is matched, they will be surrounded by the corresponding `hl_start` and `hl_end`,
+which you are expected to set to your preferred ANSI escapes, IRC color codes, HTML spans, or similar.
 
 ### Synopsis
 ```c
