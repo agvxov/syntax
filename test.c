@@ -16,8 +16,8 @@
 #define ANSI_RST    "\x1b[0m"
 
 /* IRC color/control sequences. */
-#define IRC_RED  "\x0304"
-#define IRC_BLUE "\x0312"
+#define IRC_RED  "\x03" "04"
+#define IRC_BLUE "\x03" "12"
 #define IRC_RST  "\x03"
 
 [[maybe_unused]] static const char * numbers = "0123456789";
