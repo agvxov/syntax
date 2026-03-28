@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <string.h>
 
 // E.g: + - * / 0 1
@@ -238,7 +239,7 @@ void syntax_highlight_string(
             const char * hl_start   = regions[i].hl_start ? regions[i].hl_start       : "";
             const char * hl_end     = regions[i].hl_end   ? regions[i].hl_end         : "";
 
-            const auto saved_out = out;
+            char * const saved_out = out;
             if (_syntax_destination_append(&out, &remaining, hl_start, strlen(hl_start))
             ||  _syntax_destination_append(&out, &remaining, regions[i].start, start_len)) {
                 out = saved_out;
@@ -317,7 +318,7 @@ void syntax_highlight_string(
                         const char * hl_start = keyword_groups[i].hl_start ? keyword_groups[i].hl_start : "";
                         const char * hl_end   = keyword_groups[i].hl_end   ? keyword_groups[i].hl_end   : "";
 
-                        const auto saved_out = out;
+                        char * const saved_out = out;
                         if (_syntax_destination_append(&out, &remaining, hl_start, strlen(hl_start))
                         ||  _syntax_destination_append(&out, &remaining, *w, word_len)
                         ||  _syntax_destination_append(&out, &remaining, hl_end, strlen(hl_end))) {

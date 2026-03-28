@@ -25,6 +25,9 @@ extern size_t syntax_max_memory_requirement(size_t input_len);
 extern void syntax_highlight_string(char * const destination, const char * const source, const size_t destination_size);
 ```
 
+### Compatibility
+Syntax is C99 with no dependencies.
+
 ### History
 In 2023, a collection of IRC chuds agreed to program a group project together.
 They collected simple ideas that they all found agreeable,
