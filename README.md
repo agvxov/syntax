@@ -1,6 +1,6 @@
 # Syntax
 
-> Simple library for syntax highlighting
+> Simple header-only library for syntax highlighting
 
 ### Overview
 To work with Syntax, you have to define a syntax first.
@@ -29,8 +29,8 @@ extern void syntax_highlight_string(char * const destination, const char * const
 ```
 
 ### Compatibility
-Syntax is C99 with no dependencies.
-Syntax never allocates heap memory.
+Syntax is C99 header-only library with no dependencies,
+which never allocates heap memory.
 
 ### History
 In 2023, a collection of IRC chuds agreed to program a group project together.
