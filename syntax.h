@@ -40,14 +40,6 @@ const char * const word_characters =
   #endif
 ;
 
-#define DEFINITION_MAX 16
-static char_group_t char_groups[DEFINITION_MAX];
-static int char_groups_empty_top;
-static keyword_group_t keyword_groups[DEFINITION_MAX];
-static int keyword_groups_empty_top;
-static region_t regions[DEFINITION_MAX];
-static int regions_empty_top;
-
 
 extern int syntax_init(void);
 extern int syntax_deinit(void);
@@ -57,6 +49,14 @@ extern int syntax_define_region(const char * start, const char * end, const char
 extern size_t syntax_max_memory_requirement(size_t input_len);
 extern void syntax_highlight_string(char * const destination, const char * const source, const size_t destination_size);
 
+
+#define DEFINITION_MAX 16
+static char_group_t char_groups[DEFINITION_MAX];
+static int char_groups_empty_top;
+static keyword_group_t keyword_groups[DEFINITION_MAX];
+static int keyword_groups_empty_top;
+static region_t regions[DEFINITION_MAX];
+static int regions_empty_top;
 
 int syntax_init(void) {
     char_groups_empty_top    = 0;
@@ -338,7 +338,6 @@ void syntax_highlight_string(
         }
 
         // Char
-        matched = false;
         for (int i = 0; i < char_groups_empty_top; i++) {
             const char * chars = char_groups[i].chars;
             if (chars == NULL) {
@@ -360,9 +359,6 @@ void syntax_highlight_string(
             const size_t hl_start_len = strlen(hl_start);
             const size_t hl_end_len   = strlen(hl_end);
 
-            /* Need room for:
-             *   hl_start + at least one payload byte + hl_end + '\0'
-             */
             if (remaining <= hl_start_len + hl_end_len + 1) {
                 continue;
             }
