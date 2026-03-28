@@ -1,0 +1,291 @@
+#include <string.h>
+
+typedef struct {
+    const char * * keywords;
+    const char * hl_start;
+    const char * hl_end;
+} keyword_group_t;
+
+typedef struct {
+    const char * start;
+    const char * end;
+    const char * escape;
+    const char * hl_start;
+    const char * hl_end;
+} range_t;
+
+const char * const word_characters =
+  #ifdef SYNTAX_WORD_CHARACTERS
+    SYNTAX_WORD_CHARACTERS
+  #else
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "0123456789"
+    "_-"
+  #endif
+;
+
+#define DEFINITION_MAX 16
+keyword_group_t keyword_groups[DEFINITION_MAX];
+range_t ranges[DEFINITION_MAX];
+int keyword_groups_empty_top;
+int ranges_empty_top;
+
+/* Given an input length and the current highlighting,
+ *  return the worst case scenario for the required buffer's size.
+ */
+size_t syntax_max_memory_requirement(
+  size_t input_len
+) {
+    size_t r = input_len;
+
+    for (int i = 0; i < keyword_groups_empty_top; i++) {
+        size_t start_len = strlen(keyword_groups[i].hl_start);
+        size_t end_len   = strlen(keyword_groups[i].hl_end);
+        for (const char * * w = keyword_groups[i].keywords; *w != NULL; w++) {
+            size_t l = strlen(*w);
+            l = (input_len / l)
+              * (l + start_len + end_len)
+            ;
+            if (r < l) {
+                r = l;
+            }
+        }
+    }
+
+    for (int i = 0; i < ranges_empty_top; i++) {
+        size_t l = strlen(ranges[i].start)
+                 + strlen(ranges[i].end)
+        ;
+        l = (input_len / l)
+          * (l + strlen(ranges[i].hl_start) + strlen(ranges[i].end))
+        ;
+        if (r < l) {
+            r = l;
+        }
+    }
+
+    return r;
+}
+
+int syntax_init(void) {
+    keyword_groups_empty_top = 0;
+    ranges_empty_top = 0;
+
+    return 0;
+}
+
+int syntax_deinit(void) {
+    return 0;
+}
+
+int syntax_define_keywords(
+  const char * * keywords,
+  const char * hl_start,
+  const char * hl_end
+) {
+    if (keyword_groups_empty_top >= DEFINITION_MAX
+    ||  !keywords) {
+        return 1;
+    }
+
+    keyword_groups[keyword_groups_empty_top].keywords = keywords;
+    keyword_groups[keyword_groups_empty_top].hl_start = hl_start;
+    keyword_groups[keyword_groups_empty_top].hl_end   = hl_end;
+    ++keyword_groups_empty_top;
+
+    return 0;
+}
+
+int syntax_define_range(
+  const char * start,
+  const char * end,
+  const char * escape,
+  const char * hl_start,
+  const char * hl_end
+) {
+    if (ranges_empty_top >= DEFINITION_MAX
+    ||  !start) {
+        return 1;
+    }
+
+    ranges[ranges_empty_top].start    = start;
+    ranges[ranges_empty_top].end      = end;
+    ranges[ranges_empty_top].escape   = escape;
+    ranges[ranges_empty_top].hl_start = hl_start;
+    ranges[ranges_empty_top].hl_end   = hl_end;
+    ++ranges_empty_top;
+
+    return 0;
+}
+
+static
+int _syntax_destination_append(
+  char * * destination,
+  size_t * remaining,
+  const char * source,
+  size_t len
+) {
+    if (*remaining == 0 || len >= *remaining) {
+        return 1;
+    }
+
+    memcpy(*destination, source, len);
+    *destination += len;
+    *remaining -= len;
+    return 0;
+}
+
+void syntax_highlight_string(
+    char * const destination,
+    const char * const source,
+    const size_t destination_size
+) {
+    if (destination      == NULL
+    ||  source           == NULL
+    ||  destination_size == 0) {
+        return;
+    }
+
+    char * out       = destination;
+    const char * s   = source;
+    size_t remaining = destination_size;
+
+    while (*s) {
+        bool matched = false;
+
+        // Ranges
+        for (int i = 0; i < ranges_empty_top; i++) {
+            const size_t start_len = strlen(ranges[i].start);
+            if (start_len == 0) {
+                continue;
+            }
+
+            if (strncmp(s, ranges[i].start, start_len) != 0) {
+                continue;
+            }
+
+            const size_t end_len    = ranges[i].end ? strlen(ranges[i].end) : 0;
+            const size_t escape_len = ranges[i].escape ? strlen(ranges[i].escape) : 0;
+            const char *hl_start = ranges[i].hl_start ? ranges[i].hl_start : "";
+            const char *hl_end   = ranges[i].hl_end   ? ranges[i].hl_end   : "";
+
+            const auto saved_out = out;
+            if (_syntax_destination_append(&out, &remaining, hl_start, strlen(hl_start))
+            ||  _syntax_destination_append(&out, &remaining, ranges[i].start, start_len)) {
+                out = saved_out;
+                goto done;
+            }
+
+            s += start_len;
+
+            while (*s) {
+                if (escape_len != 0
+                &&  strncmp(s, ranges[i].escape, escape_len) == 0) {
+                    if (_syntax_destination_append(&out, &remaining, ranges[i].escape, escape_len)) {
+                        goto done;
+                    }
+                    s += escape_len;
+
+                    if (*s) {
+                        if (_syntax_destination_append(&out, &remaining, s, 1)) {
+                            goto done;
+                        }
+                        ++s;
+                    }
+                    continue;
+                }
+
+                if (end_len != 0
+                &&  strncmp(s, ranges[i].end, end_len) == 0) {
+                    if (_syntax_destination_append(&out, &remaining, ranges[i].end, end_len)
+                    ||  _syntax_destination_append(&out, &remaining, hl_end, strlen(hl_end))) {
+                        goto done;
+                    }
+                    s += end_len;
+                    matched = true;
+                    break;
+                }
+
+                if (_syntax_destination_append(&out, &remaining, s, 1)) {
+                    goto done;
+                }
+                ++s;
+            }
+
+            if (matched == false) {
+                if (_syntax_destination_append(&out, &remaining, hl_end, strlen(hl_end))) {
+                    goto done;
+                }
+            }
+
+            matched = true;
+            break;
+        }
+
+        if (matched) {
+            continue;
+        }
+
+        // Keywords
+        if (strchr(word_characters, (unsigned char)*s) != NULL) {
+            const char * word_end = s;
+            while (*word_end
+            &&     strchr(word_characters, (unsigned char)*word_end) != NULL) {
+                ++word_end;
+            }
+
+            const size_t word_len = (size_t)(word_end - s);
+            int keyword_matched = 0;
+
+            for (int i = 0; i < keyword_groups_empty_top && !keyword_matched; i++) {
+                const char * const * w = keyword_groups[i].keywords;
+                if (w == NULL) {
+                    continue;
+                }
+
+                for (; *w != NULL; w++) {
+                    const size_t kw_len = strlen(*w);
+                    if (kw_len == word_len && memcmp(s, *w, word_len) == 0) {
+                        const char * hl_start = keyword_groups[i].hl_start ? keyword_groups[i].hl_start : "";
+                        const char * hl_end   = keyword_groups[i].hl_end   ? keyword_groups[i].hl_end   : "";
+
+                        const auto saved_out = out;
+                        if (_syntax_destination_append(&out, &remaining, hl_start, strlen(hl_start))
+                        ||  _syntax_destination_append(&out, &remaining, *w, word_len)
+                        ||  _syntax_destination_append(&out, &remaining, hl_end, strlen(hl_end))) {
+                            out = saved_out;
+                            goto done;
+                        }
+
+                        s = word_end;
+                        keyword_matched = 1;
+                        break;
+                    }
+                }
+            }
+
+            if (!keyword_matched) {
+                if (_syntax_destination_append(&out, &remaining, s, word_len)) {
+                    goto done;
+                }
+                s = word_end;
+            }
+
+            continue;
+        }
+
+        // Regular text
+        if (_syntax_destination_append(&out, &remaining, s, 1)) {
+            goto done;
+        }
+        ++s;
+    }
+
+  done:
+    if (remaining > 0) {
+        *out = '\0';
+    } else if (destination_size > 0) {
+        destination[destination_size - 1] = '\0';
+    }
+}
