@@ -12,21 +12,27 @@
 #define ANSI_RST    "\x1b[0m"
 
 static const char * digits = "0123456789";
-static const char * kw_c[] = {"auto", "int", "char", "if", NULL};
+
+const char * keywords[] = {
+    "bool", "char",
+    "short", "int", "long",
+    "float", "double",
+    "static",
+    NULL,
+};
 
 signed main(void) {
-    unsigned char buf[32];
+    unsigned char buffer[1024];
 
     syntax_init();
     syntax_define_chars(digits, ANSI_CYAN, ANSI_RST);
-    syntax_define_keywords(kw_c, ANSI_RED, ANSI_RST);
+    syntax_define_keywords(keywords, ANSI_RED, ANSI_RST);
 
-    //syntax_highlight_string((char *)buf, "int x;", 8);
-    syntax_highlight_string((char *)buf, "01010", 32);
+    syntax_highlight_string((char*)buffer, "int x = 01010;", sizeof(buffer));
 
     syntax_deinit();
 
-    puts(buf);
+    puts(buffer);
 
     return 0;
 }
