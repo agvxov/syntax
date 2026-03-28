@@ -51,12 +51,14 @@ extern size_t syntax_max_memory_requirement(size_t input_len);
 extern void syntax_highlight_string(char * const destination, const char * const source, const size_t destination_size);
 
 
-#define DEFINITION_MAX 16
-static char_group_t char_groups[DEFINITION_MAX];
+#ifndef SYNTAX_DEFINITION_MAX
+#  define SYNTAX_DEFINITION_MAX 16
+#endif
+static char_group_t char_groups[SYNTAX_DEFINITION_MAX];
 static int char_groups_empty_top;
-static keyword_group_t keyword_groups[DEFINITION_MAX];
+static keyword_group_t keyword_groups[SYNTAX_DEFINITION_MAX];
 static int keyword_groups_empty_top;
-static region_t regions[DEFINITION_MAX];
+static region_t regions[SYNTAX_DEFINITION_MAX];
 static int regions_empty_top;
 
 int syntax_init(void) {
@@ -76,7 +78,7 @@ int syntax_define_chars(
   const char * hl_start,
   const char * hl_end
 ) {
-    if (char_groups_empty_top >= DEFINITION_MAX
+    if (char_groups_empty_top >= SYNTAX_DEFINITION_MAX
     ||  !chars) {
         return 1;
     }
@@ -94,7 +96,7 @@ int syntax_define_keywords(
   const char * hl_start,
   const char * hl_end
 ) {
-    if (keyword_groups_empty_top >= DEFINITION_MAX
+    if (keyword_groups_empty_top >= SYNTAX_DEFINITION_MAX
     ||  !keywords) {
         return 1;
     }
@@ -114,7 +116,7 @@ int syntax_define_region(
   const char * hl_start,
   const char * hl_end
 ) {
-    if (regions_empty_top >= DEFINITION_MAX
+    if (regions_empty_top >= SYNTAX_DEFINITION_MAX
     ||  !start) {
         return 1;
     }
