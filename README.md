@@ -2,6 +2,29 @@
 
 > Simple library for syntax highlighting
 
+### Overview
+To work with Syntax, you have to define a syntax first.
+There are 3 concepts:
+1. Keywords: strings made of keyword characters (redefinable) seperated by non-keyword characters
+2. Regions: a starter string and a terminating string between which no further matching should be done
+3. Chars: special characters should be highlighted regardless of word boundaries
+
+They are matched in the exact order as listed above.
+
+When one of them is matched, they will be sourounded by the corresponding `hl_start` and `hl_end`,
+which you are expected to set to your prefered ANSI escapes, IRC color codes, HTML spans, or similar.
+
+### Synopsis
+```c
+extern int syntax_init(void);
+extern int syntax_deinit(void);
+extern int syntax_define_chars(const char * chars, const char * hl_start, const char * hl_end);
+extern int syntax_define_keywords(const char * * keywords, const char * hl_start, const char * hl_end);
+extern int syntax_define_region(const char * start, const char * end, const char * escape, const char * hl_start, const char * hl_end);
+extern size_t syntax_max_memory_requirement(size_t input_len);
+extern void syntax_highlight_string(char * const destination, const char * const source, const size_t destination_size);
+```
+
 ### History
 In 2023, a collection of IRC chuds agreed to program a group project together.
 They collected simple ideas that they all found agreeable,
