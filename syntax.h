@@ -1,3 +1,5 @@
+#ifndef SYNTAX_H
+#define SYNTAX_H
 #include <stdbool.h>
 #include <string.h>
 
@@ -402,3 +404,4 @@ void syntax_highlight_string(
         destination[destination_size - 1] = '\0';
     }
 }
+#endif
