@@ -5,3 +5,6 @@ test:
 	./example.out
 	bake test.c
 	./test.out
+
+clean:
+	${RM} *.out
