@@ -1,4 +1,4 @@
-// @BAKE cc -o $*.out $@ -lcriterion -std=c23 -Wall -Wpedantic -ggdb
+// @BAKE cc -o $*.out $@ -lcriterion -std=c23 -Wall -Wpedantic -ggdb -fsanitize=address
 #include <criterion/criterion.h>
 #include <criterion/new/assert.h>
 #include <string.h>
