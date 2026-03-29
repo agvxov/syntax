@@ -15,7 +15,7 @@ When one of them is matched, they will be surrounded by the corresponding `hl_st
 which you are expected to set to your preferred ANSI escapes, IRC color codes, HTML spans, or similar.
 
 > [!NOTE]
-> Technical details and compile tile nuisances can be found at the top of `syntax.h`.
+> Technical details and compiletime nuisances can be found at the top of `syntax.h`.
 
 ### Synopsis
 ```c
