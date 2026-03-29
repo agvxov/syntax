@@ -178,6 +178,12 @@ Test(syntax_highlight, unterminated_string_is_safe) {
     cr_assert_eq(syntax_deinit(), 0);
 }
 
+Test(syntax_highlight, mixed_string_nesting) {
+    configure_common_syntax();
+    expect_highlight("\"a'b'c\"", 64, ANSI_YELLOW "\"a'b'c\"" ANSI_RST);
+    cr_assert_eq(syntax_deinit(), 0);
+}
+
 Test(syntax_highlight, python_def_and_return) {
     configure_common_syntax();
     expect_highlight(
