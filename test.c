@@ -52,7 +52,7 @@ void expect_highlight(
   size_t dst_size,
   const char * expected
 ) {
-    unsigned char buf[256];
+    unsigned char buf[512];
     memset(buf, 0xCC, sizeof(buf));
 
     syntax_highlight_string((char *)buf, source, dst_size);
