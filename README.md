@@ -32,6 +32,16 @@ extern void syntax_highlight_string(char * const destination, const char * const
 Syntax is C99 header-only library with no dependencies,
 which never allocates heap memory.
 
+### HL
+This repository also contains the source code for the executable `hl`,
+which stands for "highlight" and behaves similar to `cat`,
+but with syntax highlighting.
+On surface level, it is similar to `bat`, however while `bat` excels at everyday usage,
+`hl` is better customizable and is ideal for creating colored screenshots
+(possibly using `xeen`).
+
+The `library/` folder only exists to accommodate the dependencies of `hl`.
+
 ### History
 In 2023, a collection of IRC chuds agreed to program a group project together.
 They collected simple ideas that they all found agreeable,
