@@ -94,6 +94,12 @@ Test(syntax_highlight, c_keyword_prefix_is_not_a_match) {
     cr_assert_eq(syntax_deinit(), 0);
 }
 
+Test(syntax_highlight, c_keyword_postfix_is_not_a_match) {
+    configure_common_syntax();
+    expect_highlight("elsif", 64, "elsif");
+    cr_assert_eq(syntax_deinit(), 0);
+}
+
 Test(syntax_highlight, truncated_output_is_terminated_and_has_no_overflow) {
     configure_common_syntax();
 
