@@ -1051,7 +1051,7 @@ signed main(int argc, char * argv[]) {
     syntax_highlight_string(buffer, s, n);
     syntax_deinit();
 
-    puts(buffer);
+    fputs(buffer, stdout);
 
     return 0;
 }
