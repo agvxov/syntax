@@ -163,12 +163,21 @@ size_t syntax_max_memory_requirement(
 ) {
     size_t r = input_len;
 
+    for (int i = 0; i < char_groups_empty_top; i++) {
+        size_t start_len = strlen(char_groups[i].hl_start);
+        size_t end_len   = strlen(char_groups[i].hl_end);
+        size_t l = input_len * (1 + start_len + end_len);
+        if (r < l) {
+            r = l;
+        }
+    }
+
     for (int i = 0; i < keyword_groups_empty_top; i++) {
         size_t start_len = strlen(keyword_groups[i].hl_start);
         size_t end_len   = strlen(keyword_groups[i].hl_end);
         for (const char * const * w = keyword_groups[i].keywords; *w != NULL; w++) {
             size_t l = strlen(*w);
-            l = (input_len / l)
+            l = ((input_len / l) + 1)
               * (l + start_len + end_len)
             ;
             if (r < l) {
@@ -178,18 +187,18 @@ size_t syntax_max_memory_requirement(
     }
 
     for (int i = 0; i < regions_empty_top; i++) {
-        size_t l = strlen(regions[i].start)
-                 + strlen(regions[i].end)
-        ;
-        l = (input_len / l)
-          * (l + strlen(regions[i].hl_start) + strlen(regions[i].end))
+        size_t start_len = strlen(regions[i].hl_start);
+        size_t end_len   = strlen(regions[i].hl_end);
+        size_t l = strlen(regions[i].start) + strlen(regions[i].end);
+        l = ((input_len / l) + 1)
+          * (l + start_len + end_len)
         ;
         if (r < l) {
             r = l;
         }
     }
 
-    return r;
+    return r + 1;
 }
 
 static
