@@ -955,7 +955,7 @@ void handle_arguments(int argc, char * * argv) {
             cases("--valgrind") syntax_function = syntax_valgrind; break;
             cases("--load") {
                 if (i + 1 >= argc) {
-                    fprintf(stderr, "Missing argument.");
+                    fprintf(stderr, "Missing argument.\n");
                     exit(3);
                 }
 
@@ -965,7 +965,7 @@ void handle_arguments(int argc, char * * argv) {
             }
             cases("--compile-and-load") {
                 if (i + 1 >= argc) {
-                    fprintf(stderr, "Missing argument.");
+                    fprintf(stderr, "Missing argument.\n");
                     exit(3);
                 }
 
@@ -980,7 +980,7 @@ void handle_arguments(int argc, char * * argv) {
             }
             defaults {
                 if (argv[i][0] == '-') {
-                    fprintf(stderr, "Unrecognized option '%s'.", argv[i]);
+                    fprintf(stderr, "Unrecognized option '%s'.\n", argv[i]);
                     exit(2);
                 }
 
@@ -994,7 +994,7 @@ void handle_arguments(int argc, char * * argv) {
     }
 
   missing_required_argument:
-    fputs("Missing required argument.", stderr);
+    fputs("Missing required argument.\n", stderr);
     usage();
     exit(1);
 }
