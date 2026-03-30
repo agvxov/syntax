@@ -1,6 +1,7 @@
 // @BAKE gcc -o $* $@ -std=c23 -ldl -rdynamic -Wall -Wpedantic -ggdb
 #include "library/slurp.h"
 #include <dlfcn.h>
+#include <unistd.h>
 #define SYNTAX_DEFINITION_MAX 32
 #define SYNTAX_IMPLEMENTATION
 #include "syntax.h"
@@ -934,9 +935,7 @@ void usage(void) {
 }
 
 void handle_arguments(int argc, char * * argv) {
-    if (argc < 2) {
-        goto missing_required_argument;
-    }
+    syntax_function = syntax_c;
 
     for (int i = 1; i < argc; i++) {
         switchs(argv[i])
@@ -985,18 +984,18 @@ void handle_arguments(int argc, char * * argv) {
                 }
 
                 filename = argv[i];
-                if (!syntax_function) {
-                    syntax_function = syntax_c;
-                }
                 return;
             }
         endswitchs;
     }
 
-  missing_required_argument:
-    fputs("Missing required argument.\n", stderr);
-    usage();
-    exit(1);
+    if (isatty(STDIN_FILENO)) {
+        fputs("Missing required argument.\n", stderr);
+        usage();
+        exit(1);
+    } else {
+        filename = "/dev/stdin";
+    }
 }
 
 void load_extension(void) {
