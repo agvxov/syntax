@@ -1,5 +1,6 @@
-// @BAKE gcc -o $* $@ -std=c23 -Wall -Wpedantic -ggdb
+// @BAKE gcc -o $* $@ -std=c23 -ldl -rdynamic -Wall -Wpedantic -ggdb
 #include "library/slurp.h"
+#include <dlfcn.h>
 #define SYNTAX_DEFINITION_MAX 20
 #define SYNTAX_IMPLEMENTATION
 #include "syntax.h"
@@ -9,27 +10,37 @@
 #define defaults   } else {
 #define endswitchs } } while (0)
 
-#define RST     "\033[0m"
-#define B       "\033[1m"
-#define RED     "\033[31m"
-#define GREEN   "\033[32m"
-#define YELLOW  "\033[33m"
-#define BLUE    "\033[34m"
-#define MAGENTA "\033[35m"
-#define CYAN    "\033[36m"
-#define WHITE   "\033[37m"
-#define GRAY    "\033[90m"
+const char * RST          = "\033[0m";
+const char * RED          = "\033[31m";
+const char * GREEN        = "\033[32m";
+const char * YELLOW       = "\033[33m";
+const char * BLUE         = "\033[34m";
+const char * MAGENTA      = "\033[35m";
+const char * CYAN         = "\033[36m";
+const char * WHITE        = "\033[37m";
+const char * GRAY         = "\033[90m";
+const char * BOLD_RED     = "\033[1;31m";
+const char * BOLD_GREEN   = "\033[1;32m";
+const char * BOLD_YELLOW  = "\033[1;33m";
+const char * BOLD_BLUE    = "\033[1;34m";
+const char * BOLD_MAGENTA = "\033[1;35m";
+const char * BOLD_CYAN    = "\033[1;36m";
+const char * BOLD_WHITE   = "\033[1;37m";
+const char * BOLD_GRAY    = "\033[1;90m";
 
-#define COMMENT GRAY
-#define TYPE    CYAN
-#define STRING  GREEN
-#define SPECIAL YELLOW
-#define CONST   BLUE
-#define KEYWORD B BLUE
+const char * COMMENT = "\033[90m";
+const char * TYPE    = "\033[36m";
+const char * STRING  = "\033[32m";
+const char * SPECIAL = "\033[33m";
+const char * CONST   = "\033[34m";
+const char * KEYWORD = "\033[1;34m";
 
 const char * filename = nullptr;
+const char * libname  = nullptr;
+
 typedef void (*syntax_fn)(void);
 syntax_fn syntax_function = nullptr;
+syntax_fn hl_extension = nullptr;
 
 // ---
 
@@ -234,11 +245,11 @@ void syntax_c(void) {
     syntax_define_keywords(c_control, YELLOW, RST);
     syntax_define_keywords(c_jump, YELLOW, RST);
     syntax_define_keywords(c_special, SPECIAL, RST);
-    syntax_define_region("\"", "\"", "\\", GREEN, RST);
-    syntax_define_region("'", "'", "\\", GREEN, RST);
+    syntax_define_region("\"", "\"", "\\", STRING, RST);
+    syntax_define_region("'", "'", "\\", STRING, RST);
     syntax_define_region("#", "\n", "", GRAY, RST);
-    syntax_define_region("//", "\n", "\"", GRAY, RST);
-    syntax_define_region("/*", "*/", "", GRAY, RST);
+    syntax_define_region("//", "\n", "\"", COMMENT, RST);
+    syntax_define_region("/*", "*/", "", COMMENT, RST);
 }
 
 void syntax_cpp(void) {
@@ -887,7 +898,7 @@ void syntax_valgrind(void) {
     syntax_define_chars(digits, CONST, RST);
     syntax_define_chars(".,:;<=>+-*/%!&~^?|@#$", SPECIAL, RST);
     syntax_define_keywords(valgrind_title, KEYWORD, RST);
-    syntax_define_region("==", "==", "", B RED, RST);
+    syntax_define_region("==", "==", "", BOLD_RED, RST);
     syntax_define_region("\"", "\"", "", STRING, RST);
     syntax_define_region("(", ")", "", MAGENTA, RST);
     syntax_define_region("0x", ":", "", SPECIAL, RST);
@@ -898,24 +909,23 @@ void syntax_valgrind(void) {
 void usage(void) {
     fputs(
         "hl [options] <file> : cat highlighted code\n"
-        " --ada      : use Ada syntax\n"
-        " --c        : use C syntax\n"
-        " --cpp      : use C++ syntax\n"
-        " --fasm     : use Fasm syntax\n"
-        " --fortran  : use Fortran syntax\n"
-        " --holy-c   : use Holy C syntax\n"
-        " --lua      : use Lua syntax\n"
-        " --python   : use Python syntax\n"
-        " --valgrind : use Valgrind syntax\n"
+        " --ada       : use Ada syntax\n"
+        " --c         : use C syntax\n"
+        " --cpp       : use C++ syntax\n"
+        " --fasm      : use Fasm syntax\n"
+        " --fortran   : use Fortran syntax\n"
+        " --holy-c    : use Holy C syntax\n"
+        " --lua       : use Lua syntax\n"
+        " --python    : use Python syntax\n"
+        " --valgrind  : use Valgrind syntax\n"
+        " --load file : load dynamic library and call hl_extension\n"
         , stderr
     );
 }
 
 void handle_arguments(int argc, char * * argv) {
     if (argc < 2) {
-        fputs("Missing required argument.", stderr);
-        usage();
-        exit(1);
+        goto missing_required_argument;
     }
 
     for (int i = 1; i < argc; i++) {
@@ -933,6 +943,18 @@ void handle_arguments(int argc, char * * argv) {
             cases("--lua")      syntax_function = syntax_lua;      break;
             cases("--python")   syntax_function = syntax_python;   break;
             cases("--valgrind") syntax_function = syntax_valgrind; break;
+            cases("--load") {
+                if (i + 1 >= argc) {
+                    fprintf(stderr, "Missing argument.");
+                    exit(3);
+                }
+                libname = argv[i+1];
+                ++i;
+                break;
+            }
+            cases("--compile-and-load") {
+                // XXX
+            }
             defaults {
                 if (argv[i][0] == '-') {
                     fprintf(stderr, "Unrecognized option '%s'.", argv[i]);
@@ -947,6 +969,38 @@ void handle_arguments(int argc, char * * argv) {
             }
         endswitchs;
     }
+
+  missing_required_argument:
+    fputs("Missing required argument.", stderr);
+    usage();
+    exit(1);
+}
+
+void load_extension(void) {
+    if (!libname) {
+        return;
+    }
+
+    void * handle = dlopen(libname, RTLD_NOW);
+    if (!handle) {
+        fprintf(stderr, "Error of dlopen: %s.\n", dlerror());
+        exit(4);
+    }
+
+    dlerror(); // clear existing errors
+
+    hl_extension = (syntax_fn)dlsym(handle, "hl_extension");
+
+    char * err = dlerror();
+    if (err) {
+        fprintf(stderr, "Error of dlsym: %s.\n", err);
+        dlclose(handle);
+        exit(4);
+    }
+
+    hl_extension();
+
+    //dlclose(handle);
 }
 
 signed main(int argc, char * argv[]) {
@@ -955,6 +1009,8 @@ signed main(int argc, char * argv[]) {
     auto s = slurp(filename);
     auto n = syntax_max_memory_requirement(strlen(s));
     auto buffer = malloc(sizeof(char) * n);
+
+    load_extension();
 
     syntax_init();
     syntax_function();
