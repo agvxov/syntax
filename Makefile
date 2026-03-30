@@ -6,5 +6,10 @@ test:
 	bake test.c
 	./test.out
 
+hl:
+	bake hl.c
+
 clean:
-	${RM} *.out
+	-${RM} *.out
+	-${RM} *.so
+	-${RM} hl

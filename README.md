@@ -37,8 +37,14 @@ This repository also contains the source code for the executable `hl`,
 which stands for "highlight" and behaves similar to `cat`,
 but with syntax highlighting.
 On surface level, it is similar to `bat`, however while `bat` excels at everyday usage,
-`hl` is better customizable and is ideal for creating colored screenshots
+`hl` is better customizable and is ideal for creating colored screenshots and such
 (possibly using `xeen`).
+
+If provided `hl` will attempt to load or compile and load an extension dynamic library,
+where the user is expected to define `void hl_extension(void);`
+and overwrite colors or set `syntax_function` to a custom syntax definition function.
+For the specifics, please consult the source code of `hl`,
+which can be queried from an executable using the `--dump` option.
 
 The `library/` folder only exists to accommodate the dependencies of `hl`.
 

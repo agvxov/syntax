@@ -1,14 +1,9 @@
 // @BAKE gcc -o $* $@ -std=c23 -ldl -rdynamic -Wall -Wpedantic -ggdb
 #include "library/slurp.h"
 #include <dlfcn.h>
-#define SYNTAX_DEFINITION_MAX 20
+#define SYNTAX_DEFINITION_MAX 32
 #define SYNTAX_IMPLEMENTATION
 #include "syntax.h"
-
-#define switchs(s) do { const char *__ss = (s); if (0) {
-#define cases(x)   } else if (strcmp(__ss, (x)) == 0) {
-#define defaults   } else {
-#define endswitchs } } while (0)
 
 const char * RST          = "\033[0m";
 const char * RED          = "\033[31m";
@@ -37,6 +32,12 @@ const char * KEYWORD = "\033[1;34m";
 
 const char * filename = nullptr;
 const char * libname  = nullptr;
+const char * srcname  = nullptr;
+
+const char my_source_code[] = {
+    #embed "hl.c"
+    , '\0'
+};
 
 typedef void (*syntax_fn)(void);
 syntax_fn syntax_function = nullptr;
@@ -906,19 +907,28 @@ void syntax_valgrind(void) {
 
 // ---
 
+#define switchs(s) do { const char *__ss = (s); if (0) {
+#define cases(x)   } else if (strcmp(__ss, (x)) == 0) {
+#define defaults   } else {
+#define endswitchs } } while (0)
+
 void usage(void) {
     fputs(
         "hl [options] <file> : cat highlighted code\n"
-        " --ada       : use Ada syntax\n"
-        " --c         : use C syntax\n"
-        " --cpp       : use C++ syntax\n"
-        " --fasm      : use Fasm syntax\n"
-        " --fortran   : use Fortran syntax\n"
-        " --holy-c    : use Holy C syntax\n"
-        " --lua       : use Lua syntax\n"
-        " --python    : use Python syntax\n"
-        " --valgrind  : use Valgrind syntax\n"
-        " --load file : load dynamic library and call hl_extension\n"
+        " --ada                   : use Ada syntax\n"
+        " --c                     : use C syntax\n"
+        " --cpp                   : use C++ syntax\n"
+        " --fasm                  : use Fasm syntax\n"
+        " --fortran               : use Fortran syntax\n"
+        " --holy-c                : use Holy C syntax\n"
+        " --lua                   : use Lua syntax\n"
+        " --python                : use Python syntax\n"
+        " --valgrind              : use Valgrind syntax\n"
+        " --load file             : load dynamic library and call hl_extension\n"
+        " --load-and-compile file : attempt to compile dynamic library and ^^^ load it;\n"
+        "                            it will fail outside of a UNIX like system\n"
+        "                            using a GCC like compiler\n"
+        " --dump                  : print own source code and exit\n"
         , stderr
     );
 }
@@ -948,24 +958,37 @@ void handle_arguments(int argc, char * * argv) {
                     fprintf(stderr, "Missing argument.");
                     exit(3);
                 }
+
                 libname = argv[i+1];
                 ++i;
                 break;
             }
             cases("--compile-and-load") {
-                // XXX
+                if (i + 1 >= argc) {
+                    fprintf(stderr, "Missing argument.");
+                    exit(3);
+                }
+
+                srcname = argv[i+1];
+                libname = "./extension.so";
+                ++i;
+                break;
+            }
+            cases("--dump") {
+                puts(my_source_code);
+                exit(0);
             }
             defaults {
                 if (argv[i][0] == '-') {
                     fprintf(stderr, "Unrecognized option '%s'.", argv[i]);
                     exit(2);
-                } else {
-                    filename = argv[i];
-                    if (!syntax_function) {
-                        syntax_function = syntax_c;
-                    }
-                    return;
                 }
+
+                filename = argv[i];
+                if (!syntax_function) {
+                    syntax_function = syntax_c;
+                }
+                return;
             }
         endswitchs;
     }
@@ -977,6 +1000,21 @@ void handle_arguments(int argc, char * * argv) {
 }
 
 void load_extension(void) {
+    if (srcname) {
+        char * command_buffer;
+        asprintf(&command_buffer,
+            "cc -fPIC -shared -o extension.so %s",
+            srcname
+        );
+        int err = system(command_buffer);
+        free(command_buffer);
+
+        if (err) {
+            fputs("Compile-step failed.\n", stderr);
+            exit(5);
+        }
+    }
+
     if (!libname) {
         return;
     }
@@ -994,13 +1032,10 @@ void load_extension(void) {
     char * err = dlerror();
     if (err) {
         fprintf(stderr, "Error of dlsym: %s.\n", err);
-        dlclose(handle);
         exit(4);
     }
 
     hl_extension();
-
-    //dlclose(handle);
 }
 
 signed main(int argc, char * argv[]) {
