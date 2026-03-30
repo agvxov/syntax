@@ -1,4 +1,4 @@
-.PHONY: test
+.PHONY: test clean
 
 test:
 	bake example.c
@@ -6,7 +6,7 @@ test:
 	bake test.c
 	./test.out
 
-hl:
+hl: hl.c syntax.h
 	bake hl.c
 
 clean:

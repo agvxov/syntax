@@ -1042,13 +1042,13 @@ signed main(int argc, char * argv[]) {
     handle_arguments(argc, argv);
 
     auto s = slurp(filename);
-    auto n = syntax_max_memory_requirement(strlen(s));
-    auto buffer = malloc(sizeof(char) * n);
 
     load_extension();
 
     syntax_init();
     syntax_function();
+    auto n = syntax_max_memory_requirement(strlen(s));
+    auto buffer = malloc(sizeof(char) * n);
     syntax_highlight_string(buffer, s, n);
     syntax_deinit();
 
