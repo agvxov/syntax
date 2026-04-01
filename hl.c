@@ -24,12 +24,14 @@ const char * BOLD_CYAN    = "\033[1;36m";
 const char * BOLD_WHITE   = "\033[1;37m";
 const char * BOLD_GRAY    = "\033[1;90m";
 
-const char * COMMENT = "\033[90m";
-const char * TYPE    = "\033[36m";
-const char * STRING  = "\033[32m";
-const char * SPECIAL = "\033[33m";
-const char * CONST   = "\033[34m";
-const char * KEYWORD = "\033[1;34m";
+const char * COMMENT        = "\033[90m";
+const char * SOFT_DELIMITER = "\033[38;5;159m";
+const char * DELIMITER      = "\033[38;5;208m";
+const char * TYPE           = "\033[36m";
+const char * STRING         = "\033[32m";
+const char * SPECIAL        = "\033[33m";
+const char * KEYWORD        = "\033[1;34m";
+const char * CONST          = "\033[34m";
 
 const char * filename = nullptr;
 const char * libname  = nullptr;
@@ -69,6 +71,11 @@ void syntax_ada(void) {
         "numeric_error",
         NULL,
     };
+    static const char * const ada_begin_end[] = {
+        "begin",
+        "end",
+        NULL,
+    };
     static const char * const ada_keywords[] = {
         "abort",
         "else",
@@ -79,7 +86,6 @@ void syntax_ada(void) {
         "not",
         "reverse",
         "abstract",
-        "end",
         "null",
         "accept",
         "entry",
@@ -104,7 +110,6 @@ void syntax_ada(void) {
         "generic",
         "package",
         "task",
-        "begin",
         "goto",
         "pragma",
         "body",
@@ -149,7 +154,8 @@ void syntax_ada(void) {
 
     syntax_define_chars(digits, CONST, RST);
     syntax_define_chars(".,:;<=>+-*/&|@", SPECIAL, RST);
-    syntax_define_chars("()[]", SPECIAL, RST);
+    syntax_define_chars("()[]", SOFT_DELIMITER, RST);
+    syntax_define_keywords(ada_begin_end, DELIMITER, RST);
     syntax_define_keywords(ada_types, TYPE, RST);
     syntax_define_keywords(ada_errors, RED, RST);
     syntax_define_keywords(ada_keywords, KEYWORD, RST);
@@ -238,8 +244,9 @@ void syntax_c(void) {
     };
 
     syntax_define_chars(digits, CONST, RST);
-    syntax_define_chars("+-*/%=&|^~!<>?:", SPECIAL, RST);
-    syntax_define_chars(".;()[]{}", SPECIAL, RST);
+    syntax_define_chars(".:()", SOFT_DELIMITER, RST);
+    syntax_define_chars(";{}", DELIMITER, RST);
+    syntax_define_chars("+-*/%=&|^~!<>?[]", SPECIAL, RST);
     syntax_define_keywords(c_type, TYPE, RST);
     syntax_define_keywords(c_group, GREEN, RST);
     syntax_define_keywords(c_value, CONST, RST);
@@ -471,7 +478,7 @@ void syntax_fortran(void) {
         NULL
     };
 
-    syntax_define_chars("()[]", SPECIAL, RST);
+    syntax_define_chars("()[];", SPECIAL, RST);
     syntax_define_chars(",:<=>+-*/&", SPECIAL, RST);
     syntax_define_keywords(fortran_keywords, KEYWORD, RST);
     syntax_define_keywords(fortran_types, TYPE, RST);
