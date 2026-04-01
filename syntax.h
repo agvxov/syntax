@@ -107,7 +107,7 @@ int syntax_define_chars(
         return 1;
     }
 
-    char_groups[char_groups_empty_top].chars = chars;
+    char_groups[char_groups_empty_top].chars    = chars;
     char_groups[char_groups_empty_top].hl_start = hl_start;
     char_groups[char_groups_empty_top].hl_end   = hl_end;
     ++char_groups_empty_top;
