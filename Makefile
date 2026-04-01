@@ -1,5 +1,7 @@
 .PHONY: test clean
 
+main: hl test
+
 test:
 	bake example.c
 	./example.out
