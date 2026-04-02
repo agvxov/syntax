@@ -244,7 +244,8 @@ void syntax_c(void) {
     };
 
     syntax_define_chars(digits, CONST, RST);
-    syntax_define_chars(".:()", SOFT_DELIMITER, RST);
+    syntax_define_chars("'", STRING, ""); // handles both char literals and digit separators
+    syntax_define_chars(",.:()", SOFT_DELIMITER, RST);
     syntax_define_chars(";{}", DELIMITER, RST);
     syntax_define_chars("+-*/%=&|^~!<>?[]", SPECIAL, RST);
     syntax_define_keywords(c_type, TYPE, RST);
@@ -255,7 +256,6 @@ void syntax_c(void) {
     syntax_define_keywords(c_jump, YELLOW, RST);
     syntax_define_keywords(c_special, SPECIAL, RST);
     syntax_define_region("\"", "\"", "\\", STRING, RST);
-    syntax_define_region("'", "'", "\\", STRING, RST);
     syntax_define_region("#", "\n", "", GRAY, RST);
     syntax_define_region("//", "\n", "\"", COMMENT, RST);
     syntax_define_region("/*", "*/", "", COMMENT, RST);
